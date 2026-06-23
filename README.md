@@ -1,4 +1,4 @@
-# YouTube Caption Styler
+# Caption Engine
 
 Customize YouTube subtitles exactly the way you want.
 

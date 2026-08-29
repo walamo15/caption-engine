@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Caption Engine
-// @namespace    walamo.caption.engine
-// @version      1.0
+// @name         YouTube Caption Styler
+// @namespace    walamo.youtube.captions
+// @version      6.3
 // @description  Professional YouTube caption engine with native scaling and advanced effects.
 // @match        https://www.youtube.com/*
 // @match        https://www.youtube-nocookie.com/embed/*
@@ -153,7 +153,7 @@
 
   let ttPolicy;
   try {
-    ttPolicy = window.trustedTypes?.createPolicy('ce-policy', { createHTML: (s) => s });
+    ttPolicy = window.trustedTypes?.createPolicy('walamo-policy', { createHTML: (s) => s });
   } catch (e) {
     ttPolicy = { createHTML: (s) => s };
   }
@@ -166,7 +166,7 @@
   const GOOGLE_FONTS_BASE = ['Inter', 'Roboto', 'Noto Sans', 'Poppins', 'Mona Sans', 'IBM Plex Sans'];
 
   function loadGoogleFont(family) {
-    const id = `ce-font-${family.replace(/\s+/g, '-').toLowerCase()}`;
+    const id = `walamo-font-${family.replace(/\s+/g, '-').toLowerCase()}`;
     if (document.getElementById(id)) return;
     const link = document.createElement('link');
     link.id = id;
@@ -188,65 +188,65 @@
   }
 
   function initFontPicker(triggerEl, onSelect) {
-    let modal = document.querySelector('#ce-font-picker-modal');
+    let modal = document.querySelector('#walamo-font-picker-modal');
     if (!modal) {
         modal = document.createElement('div');
-        modal.id = 'ce-font-picker-modal';
+        modal.id = 'walamo-font-picker-modal';
         setHTML(modal, `
-            <div class="ce-font-picker-content">
-                <div class="ce-font-picker-header">
-                    <input type="text" class="ce-font-picker-search" placeholder="Search fonts (e.g. Roboto)...">
+            <div class="walamo-font-picker-content">
+                <div class="walamo-font-picker-header">
+                    <input type="text" class="walamo-font-picker-search" placeholder="Search fonts (e.g. Roboto)...">
                 </div>
-                <div class="ce-font-picker-body"></div>
-                <div class="ce-font-custom-input">
-                    <input type="text" id="ce-custom-font-name" placeholder="Font Name (e.g. Geist)">
-                    <input type="text" id="ce-custom-font-url" placeholder="URL (WOFF2/TTF) or leave empty for Google Font">
+                <div class="walamo-font-picker-body"></div>
+                <div class="walamo-font-custom-input">
+                    <input type="text" id="walamo-custom-font-name" placeholder="Font Name (e.g. Geist)">
+                    <input type="text" id="walamo-custom-font-url" placeholder="URL (WOFF2/TTF) or leave empty for Google Font">
                     <div style="display:flex; gap:10px;">
-                        <button class="ce-action-btn" id="ce-custom-font-save" style="flex:1; background:var(--ce-panel-accent);">Add Font</button>
-                        <button class="ce-action-btn" id="ce-custom-font-cancel" style="flex:1;">Cancel</button>
+                        <button class="walamo-action-btn" id="walamo-custom-font-save" style="flex:1; background:var(--walamo-panel-accent);">Add Font</button>
+                        <button class="walamo-action-btn" id="walamo-custom-font-cancel" style="flex:1;">Cancel</button>
                     </div>
                 </div>
-                <div class="ce-font-picker-footer">
+                <div class="walamo-font-picker-footer">
                     <div style="font-size:11px; opacity:0.6;">Tip: Use arrows to navigate</div>
-                    <button class="ce-font-add-btn">+ Add Custom</button>
+                    <button class="walamo-font-add-btn">+ Add Custom</button>
                 </div>
             </div>
         `);
         document.body.appendChild(modal);
-
+        
         modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
-        const addBtn = modal.querySelector('.ce-font-add-btn');
-        const customInput = modal.querySelector('.ce-font-custom-input');
-        const body = modal.querySelector('.ce-font-picker-body');
-
+        const addBtn = modal.querySelector('.walamo-font-add-btn');
+        const customInput = modal.querySelector('.walamo-font-custom-input');
+        const body = modal.querySelector('.walamo-font-picker-body');
+        
         addBtn.onclick = () => { customInput.classList.add('active'); body.style.display = 'none'; };
-        modal.querySelector('#ce-custom-font-cancel').onclick = () => { customInput.classList.remove('active'); body.style.display = 'block'; };
-
-        modal.querySelector('#ce-custom-font-save').onclick = async () => {
-            const name = modal.querySelector('#ce-custom-font-name').value.trim();
-            const url = modal.querySelector('#ce-custom-font-url').value.trim();
+        modal.querySelector('#walamo-custom-font-cancel').onclick = () => { customInput.classList.remove('active'); body.style.display = 'block'; };
+        
+        modal.querySelector('#walamo-custom-font-save').onclick = async () => {
+            const name = modal.querySelector('#walamo-custom-font-name').value.trim();
+            const url = modal.querySelector('#walamo-custom-font-url').value.trim();
             if (!name) return;
-
+            
             const newFont = { name, url, type: url ? 'url' : 'google' };
             settings.customFonts.push(newFont);
             GM_setValue('customFonts', settings.customFonts);
-
+            
             if (url) await loadCustomFont(name, url);
             else loadGoogleFont(name);
-
+            
             renderFonts();
             customInput.classList.remove('active');
             body.style.display = 'block';
         };
     }
 
-    const body = modal.querySelector('.ce-font-picker-body');
-    const search = modal.querySelector('.ce-font-picker-search');
-
+    const body = modal.querySelector('.walamo-font-picker-body');
+    const search = modal.querySelector('.walamo-font-picker-search');
+    
     const renderFonts = () => {
         const query = search.value.toLowerCase();
         setHTML(body, '');
-
+        
         const categories = [
             { title: 'Favorites', fonts: settings.fontFavorites },
             { title: 'Recently Used', fonts: settings.recentFonts },
@@ -258,20 +258,20 @@
         categories.forEach(cat => {
             const filtered = cat.fonts.filter(f => f.toLowerCase().includes(query));
             if (filtered.length === 0) return;
-
+            
             const catDiv = document.createElement('div');
-            catDiv.className = 'ce-font-category';
-            setHTML(catDiv, `<div class="ce-font-category-title">${cat.title}</div>`);
-
+            catDiv.className = 'walamo-font-category';
+            setHTML(catDiv, `<div class="walamo-font-category-title">${cat.title}</div>`);
+            
             filtered.forEach(font => {
                 if (cat.title === 'Google Fonts' || (cat.title === 'Custom Fonts' && !settings.customFonts.find(cf => cf.name === font)?.url)) {
                     loadGoogleFont(font);
                 }
-
+                
                 const item = document.createElement('div');
-                item.className = 'ce-font-item';
+                item.className = 'walamo-font-item';
                 if (settings.fontFamily === font) item.classList.add('active');
-
+                
                 const isFav = settings.fontFavorites.includes(font);
                 setHTML(item, `
                     <div class="font-info">
@@ -280,7 +280,7 @@
                     </div>
                     <div class="favorite-toggle ${isFav ? 'active' : ''}">★</div>
                 `);
-
+                
                 item.onclick = (e) => {
                     if (e.target.classList.contains('favorite-toggle')) {
                         if (isFav) settings.fontFavorites = settings.fontFavorites.filter(f => f !== font);
@@ -289,13 +289,13 @@
                         renderFonts();
                         return;
                     }
-
+                    
                     settings.recentFonts = [font, ...settings.recentFonts.filter(f => f !== font)].slice(0, 5);
                     GM_setValue('recentFonts', settings.recentFonts);
                     onSelect(font);
                     modal.classList.remove('active');
                 };
-
+                
                 catDiv.appendChild(item);
             });
             body.appendChild(catDiv);
@@ -309,12 +309,12 @@
         renderFonts();
         setTimeout(() => search.focus(), 50);
     };
-
+    
     // Keyboard Nav
     search.onkeydown = (e) => {
-        const items = body.querySelectorAll('.ce-font-item');
+        const items = body.querySelectorAll('.walamo-font-item');
         let index = Array.from(items).findIndex(it => it.classList.contains('focused'));
-
+        
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             items.forEach(it => it.classList.remove('focused'));
@@ -430,7 +430,7 @@
     if (!rect || rect.width <= 0 || rect.height <= 0) return;
     const padX = settings.highlightPadX ?? 5, padY = settings.highlightPadY ?? 2;
     const highlight = document.createElement('span');
-    highlight.className = 'ce-last-word-highlight';
+    highlight.className = 'walamo-last-word-highlight';
     Object.assign(highlight.style, {
         left: `${rect.left - padX}px`,
         top: `${rect.top - padY}px`,
@@ -453,8 +453,8 @@
 
   const WHISPER_TEXT_PATTERN = /\((whispering|whispers|whisper|whispered|quietly|mumbling|mumbles|softly|soft|under breath|in a whisper)\)|\[(whispering|whispers|whisper|whispered|quietly|mumbling|mumbles|softly|soft|under breath|in a whisper)\]/i;
 
-  const FILLER_PATTERN = /\b(uh+h?|um+m?|uhm)\b/gi;
-  const FILLER_WORD = '(uh+h?|um+m?|uhm)';
+  const FILLER_PATTERN = /\b(uh+h?|um+m?|uhm|you know|like)\b/gi;
+  const FILLER_WORD = '(uh+h?|um+m?|uhm|you know|like)';
   const SENTENCE_START_FILLER = new RegExp(`^([\\t\\n\\r\\f\\v ]*)\\b${FILLER_WORD}\\b[\\t\\n\\r\\f\\v ]*`, 'i');
   const AFTER_PUNCT_FILLER = new RegExp(`([.!?][\\t\\n\\r\\f\\v ]+)\\b${FILLER_WORD}\\b[\\t\\n\\r\\f\\v ]*`, 'gi');
 
@@ -548,8 +548,8 @@
     const container = document.querySelector('.ytp-caption-window-container');
     if (!container) return;
 
-    container.querySelectorAll('.ce-focus-old, .ce-focus-current').forEach(el => {
-      el.classList.remove('ce-focus-old', 'ce-focus-current');
+    container.querySelectorAll('.walamo-focus-old, .walamo-focus-current').forEach(el => {
+      el.classList.remove('walamo-focus-old', 'walamo-focus-current');
     });
 
     if (settings.readingFocus !== 1) return;
@@ -558,7 +558,7 @@
     if (lines.length === 0) return;
 
     lines.forEach((line, index) => {
-      const cls = index === lines.length - 1 ? 'ce-focus-current' : 'ce-focus-old';
+      const cls = index === lines.length - 1 ? 'walamo-focus-current' : 'walamo-focus-old';
       line.classList.add(cls);
       if (!line.matches?.('.ytp-caption-segment')) {
         line.querySelectorAll('.ytp-caption-segment').forEach(seg => seg.classList.add(cls));
@@ -595,11 +595,11 @@
 
   function dimFillers(text) {
     FILLER_PATTERN.lastIndex = 0;
-    return text.replace(FILLER_PATTERN, m => `<span class="ce-filler-dim">${m}</span>`);
+    return text.replace(FILLER_PATTERN, m => `<span class="walamo-filler-dim">${m}</span>`);
   }
 
   function processCaptionTextNode(node, streamState) {
-    if (node.parentElement?.closest('.ce-filler-dim')) return;
+    if (node.parentElement?.closest('.walamo-filler-dim')) return;
 
     let text = cleanCaptionText(node.nodeValue);
 
@@ -630,7 +630,7 @@
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
       acceptNode(n) {
         if (!n.nodeValue || !n.parentElement?.closest('.ytp-caption-segment')) return NodeFilter.FILTER_REJECT;
-        if (n.parentElement.closest('.ce-filler-dim')) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement.closest('.walamo-filler-dim')) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       }
     });
@@ -699,7 +699,7 @@
 
   function setWhisperActive(active) {
     const container = document.querySelector('.ytp-caption-window-container');
-    if (container) container.classList.toggle('ce-whisper-active', active);
+    if (container) container.classList.toggle('walamo-whisper-active', active);
   }
 
   function updateWhisperMode() {
@@ -762,89 +762,89 @@
       // Caption Styles
       const opacity = Math.max(0, Math.min(100, (s.bgOpacity ?? 0) + bgBoost)) / 100;
       const bg = `linear-gradient(180deg, rgba(${s.bgRed ?? 0}, ${s.bgGreen ?? 0}, ${s.bgBlue ?? 0}, ${opacity}) 0%, rgba(${s.bgRed2 ?? 0}, ${s.bgGreen2 ?? 0}, ${s.bgBlue2 ?? 0}, ${opacity}) 100%)`;
-      root.style.setProperty('--ce-caption-bg', bg);
-      root.style.setProperty('--ce-caption-radius', `${(s.radius ?? 0) / 100}em`);
-      root.style.setProperty('--ce-caption-pad-x', `${(s.padX ?? 0) / 100}em`);
-      root.style.setProperty('--ce-caption-pad-y', `${(s.padY ?? 0) / 100}em`);
-      root.style.setProperty('--ce-caption-blur', `${s.blur ?? 0}px`);
-      root.style.setProperty('--ce-text-color', `rgb(${s.textRed ?? 255}, ${s.textGreen ?? 255}, ${s.textBlue ?? 255})`);
-
+      root.style.setProperty('--walamo-caption-bg', bg);
+      root.style.setProperty('--walamo-caption-radius', `${(s.radius ?? 0) / 100}em`);
+      root.style.setProperty('--walamo-caption-pad-x', `${(s.padX ?? 0) / 100}em`);
+      root.style.setProperty('--walamo-caption-pad-y', `${(s.padY ?? 0) / 100}em`);
+      root.style.setProperty('--walamo-caption-blur', `${s.blur ?? 0}px`);
+      root.style.setProperty('--walamo-text-color', `rgb(${s.textRed ?? 255}, ${s.textGreen ?? 255}, ${s.textBlue ?? 255})`);
+      
       // Shadow with Smart Boost
       const saveSh = s.textShadowOpacity;
       settings.textShadowOpacity = Math.min(100, (s.textShadowOpacity ?? 0) + shBoost);
-      root.style.setProperty('--ce-text-shadow', generateTextShadow());
+      root.style.setProperty('--walamo-text-shadow', generateTextShadow());
       settings.textShadowOpacity = saveSh;
 
-      root.style.setProperty('--ce-font-family', s.fontFamily ?? 'inherit');
-      root.style.setProperty('--ce-font-weight', s.fontWeight ?? 400);
-      root.style.setProperty('--ce-font-scale', (s.fontScale ?? 100) / 100);
-      root.style.setProperty('--ce-letter-spacing', `${(s.letterSpacing ?? 0) / 100}em`);
-      root.style.setProperty('--ce-line-height', `${s.lineHeight ?? 120}%`);
-      root.style.setProperty('--ce-font-style', s.fontStyle ?? 'normal');
-      root.style.setProperty('--ce-text-decoration', s.textDecoration ?? 'none');
-      root.style.setProperty('--ce-text-transform', s.textTransform ?? 'none');
-      root.style.setProperty('--ce-font-stretch', s.fontStretch ?? 'normal');
-      root.style.setProperty('--ce-font-variant', s.fontVariant ?? 'normal');
-      root.style.setProperty('--ce-text-rendering', s.textRendering ?? 'auto');
-      root.style.setProperty('--ce-white-space', s.whiteSpace ?? 'normal');
-      root.style.setProperty('--ce-text-align', s.textAlign ?? 'center');
+      root.style.setProperty('--walamo-font-family', s.fontFamily ?? 'inherit');
+      root.style.setProperty('--walamo-font-weight', s.fontWeight ?? 400);
+      root.style.setProperty('--walamo-font-scale', (s.fontScale ?? 100) / 100);
+      root.style.setProperty('--walamo-letter-spacing', `${(s.letterSpacing ?? 0) / 100}em`);
+      root.style.setProperty('--walamo-line-height', `${s.lineHeight ?? 120}%`);
+      root.style.setProperty('--walamo-font-style', s.fontStyle ?? 'normal');
+      root.style.setProperty('--walamo-text-decoration', s.textDecoration ?? 'none');
+      root.style.setProperty('--walamo-text-transform', s.textTransform ?? 'none');
+      root.style.setProperty('--walamo-font-stretch', s.fontStretch ?? 'normal');
+      root.style.setProperty('--walamo-font-variant', s.fontVariant ?? 'normal');
+      root.style.setProperty('--walamo-text-rendering', s.textRendering ?? 'auto');
+      root.style.setProperty('--walamo-white-space', s.whiteSpace ?? 'normal');
+      root.style.setProperty('--walamo-text-align', s.textAlign ?? 'center');
       if ((s.glassBorder ?? 0) > 0) {
-        root.style.setProperty('--ce-glass-border-gradient', `linear-gradient(180deg, rgba(255,255,255, ${(s.glassBorder / 100) * 0.25}), rgba(255,255,255, ${(s.glassBorder / 100) * 0.05}))`);
-        root.style.setProperty('--ce-border-width', '1px');
-        root.style.setProperty('--ce-border-color', 'transparent');
+        root.style.setProperty('--walamo-glass-border-gradient', `linear-gradient(180deg, rgba(255,255,255, ${(s.glassBorder / 100) * 0.25}), rgba(255,255,255, ${(s.glassBorder / 100) * 0.05}))`);
+        root.style.setProperty('--walamo-border-width', '1px');
+        root.style.setProperty('--walamo-border-color', 'transparent');
       } else {
-        root.style.setProperty('--ce-glass-border-gradient', 'transparent');
-        root.style.setProperty('--ce-border-width', `${s.borderWidth ?? 0}px`);
-        root.style.setProperty('--ce-border-color', `rgba(255,255,255,${Math.min(100, (s.borderOpacity ?? 0) + otBoost) / 100})`);
+        root.style.setProperty('--walamo-glass-border-gradient', 'transparent');
+        root.style.setProperty('--walamo-border-width', `${s.borderWidth ?? 0}px`);
+        root.style.setProperty('--walamo-border-color', `rgba(255,255,255,${Math.min(100, (s.borderOpacity ?? 0) + otBoost) / 100})`);
       }
       if ((s.glassShine ?? 0) > 0) {
-        root.style.setProperty('--ce-glass-specular', `linear-gradient(180deg, rgba(255,255,255, ${(s.glassShine / 100) * 0.20}), rgba(255,255,255, ${(s.glassShine / 100) * 0.03}) 30%, transparent 70%)`);
+        root.style.setProperty('--walamo-glass-specular', `linear-gradient(180deg, rgba(255,255,255, ${(s.glassShine / 100) * 0.20}), rgba(255,255,255, ${(s.glassShine / 100) * 0.03}) 30%, transparent 70%)`);
       } else {
-        root.style.setProperty('--ce-glass-specular', 'transparent');
+        root.style.setProperty('--walamo-glass-specular', 'transparent');
       }
-      root.style.setProperty('--ce-glass-border', (s.glassBorder ?? 0) / 100);
-      root.style.setProperty('--ce-glass-shine', (s.glassShine ?? 0) / 100);
-      root.style.setProperty('--ce-glass-glow', Math.min(100, (s.glassGlow ?? 0) + glBoost) / 100);
-      root.style.setProperty('--ce-glass-tint', (s.glassTint ?? 0) / 100);
-      root.style.setProperty('--ce-glass-depth', (s.glassDepth ?? 0) / 100);
-      root.style.setProperty('--ce-glass-refraction', (s.glassRefraction ?? 0) / 100);
-      root.style.setProperty('--ce-glow-color', `rgb(${s.glowRed ?? 255}, ${s.glowGreen ?? 255}, ${s.glowBlue ?? 255})`);
-      root.style.setProperty('--ce-v-pos', `${s.vPos ?? 0}px`);
-      root.style.setProperty('--ce-h-pos', `${s.hPos ?? 0}px`);
-      root.style.setProperty('--ce-max-width', `${s.maxWidth ?? 100}%`);
-      root.style.setProperty('--ce-idle-opacity', (s.idleOpacity ?? 40) / 100);
+      root.style.setProperty('--walamo-glass-border', (s.glassBorder ?? 0) / 100);
+      root.style.setProperty('--walamo-glass-shine', (s.glassShine ?? 0) / 100);
+      root.style.setProperty('--walamo-glass-glow', Math.min(100, (s.glassGlow ?? 0) + glBoost) / 100);
+      root.style.setProperty('--walamo-glass-tint', (s.glassTint ?? 0) / 100);
+      root.style.setProperty('--walamo-glass-depth', (s.glassDepth ?? 0) / 100);
+      root.style.setProperty('--walamo-glass-refraction', (s.glassRefraction ?? 0) / 100);
+      root.style.setProperty('--walamo-glow-color', `rgb(${s.glowRed ?? 255}, ${s.glowGreen ?? 255}, ${s.glowBlue ?? 255})`);
+      root.style.setProperty('--walamo-v-pos', `${s.vPos ?? 0}px`);
+      root.style.setProperty('--walamo-h-pos', `${s.hPos ?? 0}px`);
+      root.style.setProperty('--walamo-max-width', `${s.maxWidth ?? 100}%`);
+      root.style.setProperty('--walamo-idle-opacity', (s.idleOpacity ?? 40) / 100);
 
       // Last Word Highlight Vars
-      root.style.setProperty('--ce-highlight-color', `${s.highlightRed ?? 255}, ${s.highlightGreen ?? 220}, ${s.highlightBlue ?? 0}`);
-      root.style.setProperty('--ce-highlight-opacity', (s.highlightOpacity ?? 28) / 100);
-      root.style.setProperty('--ce-highlight-border-opacity', (s.highlightBorderOpacity ?? 80) / 100);
-      root.style.setProperty('--ce-highlight-border-width', `${s.highlightBorderWidth ?? 2}px`);
-      root.style.setProperty('--ce-highlight-radius', `${s.highlightRadius ?? 8}px`);
-      root.style.setProperty('--ce-highlight-glow', `${s.highlightGlow ?? 12}px`);
-      root.style.setProperty('--ce-focus-old-opacity', (s.readingFocusOldOpacity ?? 35) / 100);
-      root.style.setProperty('--ce-focus-current-opacity', (s.readingFocusCurrentOpacity ?? 100) / 100);
-      root.style.setProperty('--ce-filler-opacity', (s.fillerOpacity ?? 35) / 100);
+      root.style.setProperty('--walamo-highlight-color', `${s.highlightRed ?? 255}, ${s.highlightGreen ?? 220}, ${s.highlightBlue ?? 0}`);
+      root.style.setProperty('--walamo-highlight-opacity', (s.highlightOpacity ?? 28) / 100);
+      root.style.setProperty('--walamo-highlight-border-opacity', (s.highlightBorderOpacity ?? 80) / 100);
+      root.style.setProperty('--walamo-highlight-border-width', `${s.highlightBorderWidth ?? 2}px`);
+      root.style.setProperty('--walamo-highlight-radius', `${s.highlightRadius ?? 8}px`);
+      root.style.setProperty('--walamo-highlight-glow', `${s.highlightGlow ?? 12}px`);
+      root.style.setProperty('--walamo-focus-old-opacity', (s.readingFocusOldOpacity ?? 35) / 100);
+      root.style.setProperty('--walamo-focus-current-opacity', (s.readingFocusCurrentOpacity ?? 100) / 100);
+      root.style.setProperty('--walamo-filler-opacity', (s.fillerOpacity ?? 35) / 100);
       const [wr, wg, wb] = lightenRgb(s.textRed, s.textGreen, s.textBlue, s.whisperLighten ?? 35);
-      root.style.setProperty('--ce-whisper-scale', (s.whisperScale ?? 78) / 100);
-      root.style.setProperty('--ce-whisper-opacity', (s.whisperOpacity ?? 60) / 100);
-      root.style.setProperty('--ce-whisper-color', `rgb(${wr}, ${wg}, ${wb})`);
+      root.style.setProperty('--walamo-whisper-scale', (s.whisperScale ?? 78) / 100);
+      root.style.setProperty('--walamo-whisper-opacity', (s.whisperOpacity ?? 60) / 100);
+      root.style.setProperty('--walamo-whisper-color', `rgb(${wr}, ${wg}, ${wb})`);
       scheduleLastWordHighlight();
       scheduleReadingFocus();
       scheduleCaptionTextProcessing();
       updateWhisperMode();
 
       // Panel Styles
-      root.style.setProperty('--ce-panel-bg-alpha', (s.panelBgOpacity ?? 55) / 100);
-      root.style.setProperty('--ce-panel-bg-img', s.panelBgImg ? `url("${s.panelBgImg}")` : 'none');
-      root.style.setProperty('--ce-panel-bg-img-opacity', s.panelBgImg ? (s.panelBgOpacity ?? 55) / 100 : 0);
-      root.style.setProperty('--ce-panel-bg-fade-start', `${s.panelBgFadeStart ?? 0}%`);
-      root.style.setProperty('--ce-panel-bg-fade-end', `${s.panelBgFadeEnd ?? 100}%`);
-      root.style.setProperty('--ce-panel-bg-blur', `${s.panelBgBlur ?? 0}px`);
-      root.style.setProperty('--ce-panel-bg-blur-factor', `${(s.panelBgBlur ?? 0) / 100}`);
-      const panel = document.querySelector('#ce-panel');
+      root.style.setProperty('--walamo-panel-bg-alpha', (s.panelBgOpacity ?? 55) / 100);
+      root.style.setProperty('--walamo-panel-bg-img', s.panelBgImg ? `url("${s.panelBgImg}")` : 'none');
+      root.style.setProperty('--walamo-panel-bg-img-opacity', s.panelBgImg ? (s.panelBgOpacity ?? 55) / 100 : 0);
+      root.style.setProperty('--walamo-panel-bg-fade-start', `${s.panelBgFadeStart ?? 0}%`);
+      root.style.setProperty('--walamo-panel-bg-fade-end', `${s.panelBgFadeEnd ?? 100}%`);
+      root.style.setProperty('--walamo-panel-bg-blur', `${s.panelBgBlur ?? 0}px`);
+      root.style.setProperty('--walamo-panel-bg-blur-factor', `${(s.panelBgBlur ?? 0) / 100}`);
+      const panel = document.querySelector('#walamo-caption-panel');
       if (panel) {
         panel.style.opacity = (s.panelOpacity ?? 100) / 100;
-        panel.classList.toggle('ce-panel-bg-fade', s.panelBgFade === 1);
+        panel.classList.toggle('walamo-panel-bg-fade', s.panelBgFade === 1);
         const theme = s.panelTheme?.toLowerCase() || 'dark';
         let bgLayers = [];
 
@@ -861,178 +861,186 @@
         }
         panel.style.backgroundImage = bgLayers.length ? bgLayers.join(', ') : 'none';
       }
-    } catch (e) { console.error('Caption Engine Apply Error:', e); }
+    } catch (e) { console.error('Walamo Apply Error:', e); }
   }
 
   GM_addStyle(`
     /* Last Word Highlight */
-    .ce-last-word-highlight { position: fixed; box-sizing: border-box; pointer-events: none; z-index: 2147483646; background: rgba(var(--ce-highlight-color), var(--ce-highlight-opacity)); border: var(--ce-highlight-border-width) solid rgba(var(--ce-highlight-color), var(--ce-highlight-border-opacity)); border-radius: var(--ce-highlight-radius); box-shadow: 0 0 var(--ce-highlight-glow) rgba(var(--ce-highlight-color), var(--ce-highlight-border-opacity)); mix-blend-mode: screen; }
+    .walamo-last-word-highlight { position: fixed; box-sizing: border-box; pointer-events: none; z-index: 2147483646; background: rgba(var(--walamo-highlight-color), var(--walamo-highlight-opacity)); border: var(--walamo-highlight-border-width) solid rgba(var(--walamo-highlight-color), var(--walamo-highlight-border-opacity)); border-radius: var(--walamo-highlight-radius); box-shadow: 0 0 var(--walamo-highlight-glow) rgba(var(--walamo-highlight-color), var(--walamo-highlight-border-opacity)); mix-blend-mode: screen; }
 
     /* Reading Focus Mode */
-    .caption-visual-line.ce-focus-old .ytp-caption-segment,
-    .ytp-caption-segment.ce-focus-old {
-      opacity: var(--ce-focus-old-opacity) !important;
+    .caption-visual-line.walamo-focus-old .ytp-caption-segment,
+    .ytp-caption-segment.walamo-focus-old {
+      opacity: var(--walamo-focus-old-opacity) !important;
     }
 
-    .caption-visual-line.ce-focus-current .ytp-caption-segment,
-    .ytp-caption-segment.ce-focus-current {
-      opacity: var(--ce-focus-current-opacity) !important;
+    .caption-visual-line.walamo-focus-current .ytp-caption-segment,
+    .ytp-caption-segment.walamo-focus-current {
+      opacity: var(--walamo-focus-current-opacity) !important;
     }
 
     /* Smart Filler Dim */
-    .ce-filler-dim {
-      opacity: var(--ce-filler-opacity) !important;
+    .walamo-filler-dim {
+      opacity: var(--walamo-filler-opacity) !important;
     }
 
     /* Whisper Mode */
-    .ytp-caption-window-container.ce-whisper-active .ytp-caption-segment {
-      font-size: calc(2.2em * var(--ce-font-scale) * var(--ce-whisper-scale)) !important;
-      opacity: var(--ce-whisper-opacity) !important;
-      color: var(--ce-whisper-color) !important;
+    .ytp-caption-window-container.walamo-whisper-active .ytp-caption-segment {
+      font-size: calc(2.2em * var(--walamo-font-scale) * var(--walamo-whisper-scale)) !important;
+      opacity: var(--walamo-whisper-opacity) !important;
+      color: var(--walamo-whisper-color) !important;
       font-weight: 300 !important;
     }
-
-    :root { --ce-panel-bg: #181818; --ce-panel-text: #fff; --ce-panel-accent: #3ea6ff; --ce-panel-border: #333; --ce-panel-bg-alpha: 1; --ce-focus-old-opacity: 0.35; --ce-focus-current-opacity: 1; --ce-filler-opacity: 0.35; --ce-whisper-scale: 0.78; --ce-whisper-opacity: 0.6; --ce-whisper-color: rgb(220, 220, 220); }
+    
+    :root { --walamo-panel-bg: #181818; --walamo-panel-text: #fff; --walamo-panel-accent: #3ea6ff; --walamo-panel-border: #333; --walamo-panel-bg-alpha: 1; --walamo-focus-old-opacity: 0.35; --walamo-focus-current-opacity: 1; --walamo-filler-opacity: 0.35; --walamo-whisper-scale: 0.78; --walamo-whisper-opacity: 0.6; --walamo-whisper-color: rgb(220, 220, 220); }
 
     .caption-window {
         background: transparent !important;
         overflow: visible !important;
-        translate: var(--ce-h-pos) var(--ce-v-pos) !important;
-        max-width: var(--ce-max-width) !important;
-        text-align: var(--ce-text-align) !important;
+        translate: var(--walamo-h-pos) var(--walamo-v-pos) !important;
+        max-width: var(--walamo-max-width) !important;
+        text-align: var(--walamo-text-align) !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;
-        -webkit-line-clamp: var(--ce-max-lines) !important;
+        -webkit-line-clamp: var(--walamo-max-lines) !important;
     }
 
     /* Removed Backdrop Mask */
 
     .ytp-caption-segment {
-      position: relative !important; display: inline-block !important; color: var(--ce-text-color) !important; background: var(--ce-caption-bg) padding-box, var(--ce-glass-border-gradient, transparent) border-box !important; border-radius: var(--ce-caption-radius) !important; padding: var(--ce-caption-pad-y) var(--ce-caption-pad-x) !important; box-decoration-break: clone !important; -webkit-box-decoration-break: clone !important; backdrop-filter: blur(var(--ce-caption-blur)); -webkit-backdrop-filter: blur(var(--ce-caption-blur)); text-shadow: var(--ce-text-shadow) !important;
-      font-family: var(--ce-font-family) !important; font-weight: var(--ce-font-weight) !important; font-style: var(--ce-font-style) !important; text-decoration: var(--ce-text-decoration) !important; text-transform: var(--ce-text-transform) !important; font-stretch: var(--ce-font-stretch) !important; font-variant: var(--ce-font-variant) !important; text-rendering: var(--ce-text-rendering) !important;
-      white-space: var(--ce-white-space) !important; word-break: var(--ce-word-break) !important;
-      font-size: calc(2.2em * var(--ce-font-scale)) !important; letter-spacing: var(--ce-letter-spacing) !important; line-height: var(--ce-line-height) !important; border: var(--ce-border-width) solid var(--ce-border-color) !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255, calc(.25 * var(--ce-glass-shine))), inset 0 -1px 0 rgba(255,255,255, calc(.05 * var(--ce-glass-shine))), inset 0 0 12px rgba(255,255,255, calc(.06 * var(--ce-glass-glow))), inset 0 -1px 0 rgba(0,0,0, calc(.35 * var(--ce-glass-depth))), 0 1px calc(4px * var(--ce-glass-depth)) rgba(0,0,0, calc(.45 * var(--ce-glass-depth))), 0 0 calc(18px * var(--ce-glass-glow)) var(--ce-glow-color) !important;
+      position: relative !important; display: inline-block !important; color: var(--walamo-text-color) !important; background: var(--walamo-caption-bg) padding-box, var(--walamo-glass-border-gradient, transparent) border-box !important; border-radius: var(--walamo-caption-radius) !important; padding: var(--walamo-caption-pad-y) var(--walamo-caption-pad-x) !important; box-decoration-break: clone !important; -webkit-box-decoration-break: clone !important; backdrop-filter: blur(var(--walamo-caption-blur)); -webkit-backdrop-filter: blur(var(--walamo-caption-blur)); text-shadow: var(--walamo-text-shadow) !important;
+      font-family: var(--walamo-font-family) !important; font-weight: var(--walamo-font-weight) !important; font-style: var(--walamo-font-style) !important; text-decoration: var(--walamo-text-decoration) !important; text-transform: var(--walamo-text-transform) !important; font-stretch: var(--walamo-font-stretch) !important; font-variant: var(--walamo-font-variant) !important; text-rendering: var(--walamo-text-rendering) !important; 
+      white-space: var(--walamo-white-space) !important; word-break: var(--walamo-word-break) !important;
+      font-size: calc(2.2em * var(--walamo-font-scale)) !important; letter-spacing: var(--walamo-letter-spacing) !important; line-height: var(--walamo-line-height) !important; border: var(--walamo-border-width) solid var(--walamo-border-color) !important;
+      box-shadow: inset 0 1px 0 rgba(255,255,255, calc(.25 * var(--walamo-glass-shine))), inset 0 -1px 0 rgba(255,255,255, calc(.05 * var(--walamo-glass-shine))), inset 0 0 12px rgba(255,255,255, calc(.06 * var(--walamo-glass-glow))), inset 0 -1px 0 rgba(0,0,0, calc(.35 * var(--walamo-glass-depth))), 0 1px calc(4px * var(--walamo-glass-depth)) rgba(0,0,0, calc(.45 * var(--walamo-glass-depth))), 0 0 calc(18px * var(--walamo-glass-glow)) var(--walamo-glow-color) !important;
       transition: opacity 0.3s ease;
     }
 
+    /* Disable font scaling in inline previews (front page hover) */
+    ytd-browse[page-subtype="home"] .ytp-caption-segment,
+    #inline-preview-player .ytp-caption-segment,
+    .ytd-video-preview .ytp-caption-segment,
+    .ytp-inline-preview-mode .ytp-caption-segment {
+      font-size: calc(1.2em * var(--walamo-font-scale)) !important;
+    }
+    
     .ytp-caption-segment::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: var(--ce-glass-specular, transparent);
+      background: var(--walamo-glass-specular, transparent);
       pointer-events: none;
       border-radius: inherit;
     }
 
     /* Idle Fade Logic */
-    .ce-idle-active .ytp-caption-segment {
-        opacity: var(--ce-idle-opacity);
+    .walamo-idle-active .ytp-caption-segment {
+        opacity: var(--walamo-idle-opacity);
     }
 
-    #ce-preview-container { background: #000; background-image: linear-gradient(45deg, #111 25%, transparent 25%), linear-gradient(-45deg, #111 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111 75%), linear-gradient(-45deg, transparent 75%, #111 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px 10px, 10px 0; padding: 0; height: 120px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 15px; text-align: center; overflow: hidden; border: 1px solid var(--ce-panel-border); }
-    #ce-panel { position: fixed; right: 20px; top: 80px; z-index: 2147483646; background: var(--ce-panel-bg); color: var(--ce-panel-text); font-family: system-ui, sans-serif; font-size: 13px; width: 320px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5); border: 1px solid var(--ce-panel-border); border-radius: 12px; overflow: hidden; isolation: isolate; }
-    #ce-panel::before {
+    #walamo-preview-container { background: #000; background-image: linear-gradient(45deg, #111 25%, transparent 25%), linear-gradient(-45deg, #111 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111 75%), linear-gradient(-45deg, transparent 75%, #111 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px 10px, 10px 0; padding: 0; height: 120px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 15px; text-align: center; overflow: hidden; border: 1px solid var(--walamo-panel-border); }
+    #walamo-caption-panel { position: fixed; right: 20px; top: 80px; z-index: 2147483646; background: var(--walamo-panel-bg); color: var(--walamo-panel-text); font-family: system-ui, sans-serif; font-size: 13px; width: 320px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5); border: 1px solid var(--walamo-panel-border); border-radius: 12px; overflow: hidden; isolation: isolate; }
+    #walamo-caption-panel::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       z-index: -1;
-      background-image: var(--ce-panel-bg-img, none);
+      background-image: var(--walamo-panel-bg-img, none);
       background-size: cover;
       background-position: center;
-      opacity: var(--ce-panel-bg-img-opacity, 0);
+      opacity: var(--walamo-panel-bg-img-opacity, 0);
       pointer-events: none;
       transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
       border-radius: inherit;
-      filter: blur(var(--ce-panel-bg-blur, 0px));
-      -webkit-filter: blur(var(--ce-panel-bg-blur, 0px));
-      transform: scale(calc(1 + var(--ce-panel-bg-blur-factor, 0)));
+      filter: blur(var(--walamo-panel-bg-blur, 0px));
+      -webkit-filter: blur(var(--walamo-panel-bg-blur, 0px));
+      transform: scale(calc(1 + var(--walamo-panel-bg-blur-factor, 0)));
     }
-    #ce-panel.ce-panel-bg-fade::before {
-      mask-image: linear-gradient(to bottom, rgba(0,0,0,1) var(--ce-panel-bg-fade-start, 0%), rgba(0,0,0,0) var(--ce-panel-bg-fade-end, 100%));
-      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) var(--ce-panel-bg-fade-start, 0%), rgba(0,0,0,0) var(--ce-panel-bg-fade-end, 100%));
+    #walamo-caption-panel.walamo-panel-bg-fade::before {
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,1) var(--walamo-panel-bg-fade-start, 0%), rgba(0,0,0,0) var(--walamo-panel-bg-fade-end, 100%));
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) var(--walamo-panel-bg-fade-start, 0%), rgba(0,0,0,0) var(--walamo-panel-bg-fade-end, 100%));
     }
-    #ce-panel-header { padding: 14px 14px 0 14px; position: relative; z-index: 2; }
-    .ce-panel-scroll { overflow-y: auto; padding: 0 14px 14px 14px; flex: 1; min-height: 0; }
-    #ce-panel h3 { margin: 0 0 12px 0; font-size: 16px; font-weight: 700; color: var(--ce-panel-accent); }
+    #walamo-panel-header { padding: 14px 14px 0 14px; position: relative; z-index: 2; }
+    .walamo-panel-scroll { overflow-y: auto; padding: 0 14px 14px 14px; flex: 1; min-height: 0; }
+    #walamo-caption-panel h3 { margin: 0 0 12px 0; font-size: 16px; font-weight: 700; color: var(--walamo-panel-accent); }
 
     /* Panel Themes */
-    .ce-theme-dark { --ce-panel-bg: rgba(24, 24, 24, var(--ce-panel-bg-alpha)); --ce-panel-text: #fff; --ce-panel-accent: #3ea6ff; --ce-panel-border: rgba(255,255,255,0.12); }
-    .ce-theme-light { --ce-panel-bg: rgba(245, 245, 247, var(--ce-panel-bg-alpha)); --ce-panel-text: #111; --ce-panel-accent: #065fd4; --ce-panel-border: rgba(0,0,0,0.1); }
-    .ce-theme-oled { --ce-panel-bg: rgba(0, 0, 0, var(--ce-panel-bg-alpha)); --ce-panel-text: #eee; --ce-panel-accent: #3ea6ff; --ce-panel-border: rgba(255,255,255,0.08); }
-    .ce-theme-glass {
-      --ce-panel-bg: rgba(18, 18, 28, calc(var(--ce-panel-bg-alpha) * 0.42));
-      --ce-panel-text: #f5f5f5;
-      --ce-panel-accent: #8fd3ff;
-      --ce-panel-border: rgba(255,255,255,0.28);
+    .walamo-theme-dark { --walamo-panel-bg: rgba(24, 24, 24, var(--walamo-panel-bg-alpha)); --walamo-panel-text: #fff; --walamo-panel-accent: #3ea6ff; --walamo-panel-border: rgba(255,255,255,0.12); }
+    .walamo-theme-light { --walamo-panel-bg: rgba(245, 245, 247, var(--walamo-panel-bg-alpha)); --walamo-panel-text: #111; --walamo-panel-accent: #065fd4; --walamo-panel-border: rgba(0,0,0,0.1); }
+    .walamo-theme-oled { --walamo-panel-bg: rgba(0, 0, 0, var(--walamo-panel-bg-alpha)); --walamo-panel-text: #eee; --walamo-panel-accent: #3ea6ff; --walamo-panel-border: rgba(255,255,255,0.08); }
+    .walamo-theme-glass {
+      --walamo-panel-bg: rgba(18, 18, 28, calc(var(--walamo-panel-bg-alpha) * 0.42));
+      --walamo-panel-text: #f5f5f5;
+      --walamo-panel-accent: #8fd3ff;
+      --walamo-panel-border: rgba(255,255,255,0.28);
       backdrop-filter: blur(22px) saturate(180%);
       -webkit-backdrop-filter: blur(22px) saturate(180%);
       box-shadow: 0 8px 32px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.25);
     }
-    .ce-theme-lightglass {
-      --ce-panel-bg: rgba(255, 255, 255, calc(var(--ce-panel-bg-alpha) * 0.38));
-      --ce-panel-text: #141414;
-      --ce-panel-accent: #065fd4;
-      --ce-panel-border: rgba(255,255,255,0.72);
+    .walamo-theme-lightglass {
+      --walamo-panel-bg: rgba(255, 255, 255, calc(var(--walamo-panel-bg-alpha) * 0.38));
+      --walamo-panel-text: #141414;
+      --walamo-panel-accent: #065fd4;
+      --walamo-panel-border: rgba(255,255,255,0.72);
       backdrop-filter: blur(26px) saturate(200%);
       -webkit-backdrop-filter: blur(26px) saturate(200%);
       box-shadow: 0 8px 32px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.85), inset 0 -1px 0 rgba(0,0,0,0.06);
     }
-    .ce-theme-nebula { --ce-panel-text: #fff; --ce-panel-accent: #b388ff; --ce-panel-border: rgba(179,136,255,0.25); }
-    .ce-theme-midnight { --ce-panel-text: #e8e8e8; --ce-panel-accent: #6eb5ff; --ce-panel-border: rgba(110,181,255,0.2); }
-    .ce-theme-emerald { --ce-panel-text: #e0fff4; --ce-panel-accent: #5dffb0; --ce-panel-border: rgba(93,255,176,0.2); }
-    .ce-theme-crimson { --ce-panel-text: #ffe8e8; --ce-panel-accent: #ff6b6b; --ce-panel-border: rgba(255,107,107,0.25); }
-    #ce-panel.ce-theme-glass select,
-    #ce-panel.ce-theme-glass input[type="text"],
-    #ce-panel.ce-theme-glass input[type="number"],
-    #ce-panel.ce-theme-lightglass select,
-    #ce-panel.ce-theme-lightglass input[type="text"],
-    #ce-panel.ce-theme-lightglass input[type="number"] {
+    .walamo-theme-nebula { --walamo-panel-text: #fff; --walamo-panel-accent: #b388ff; --walamo-panel-border: rgba(179,136,255,0.25); }
+    .walamo-theme-midnight { --walamo-panel-text: #e8e8e8; --walamo-panel-accent: #6eb5ff; --walamo-panel-border: rgba(110,181,255,0.2); }
+    .walamo-theme-emerald { --walamo-panel-text: #e0fff4; --walamo-panel-accent: #5dffb0; --walamo-panel-border: rgba(93,255,176,0.2); }
+    .walamo-theme-crimson { --walamo-panel-text: #ffe8e8; --walamo-panel-accent: #ff6b6b; --walamo-panel-border: rgba(255,107,107,0.25); }
+    #walamo-caption-panel.walamo-theme-glass select,
+    #walamo-caption-panel.walamo-theme-glass input[type="text"],
+    #walamo-caption-panel.walamo-theme-glass input[type="number"],
+    #walamo-caption-panel.walamo-theme-lightglass select,
+    #walamo-caption-panel.walamo-theme-lightglass input[type="text"],
+    #walamo-caption-panel.walamo-theme-lightglass input[type="number"] {
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
-    #ce-panel.ce-theme-glass select,
-    #ce-panel.ce-theme-glass input[type="text"],
-    #ce-panel.ce-theme-glass input[type="number"] {
+    #walamo-caption-panel.walamo-theme-glass select,
+    #walamo-caption-panel.walamo-theme-glass input[type="text"],
+    #walamo-caption-panel.walamo-theme-glass input[type="number"] {
       background: rgba(255,255,255,0.08) !important;
     }
-    #ce-panel.ce-theme-lightglass select,
-    #ce-panel.ce-theme-lightglass input[type="text"],
-    #ce-panel.ce-theme-lightglass input[type="number"] {
+    #walamo-caption-panel.walamo-theme-lightglass select,
+    #walamo-caption-panel.walamo-theme-lightglass input[type="text"],
+    #walamo-caption-panel.walamo-theme-lightglass input[type="number"] {
       background: rgba(255,255,255,0.45) !important;
     }
-    #ce-search-container { backdrop-filter: inherit; -webkit-backdrop-filter: inherit; }
-    #ce-panel select { width: 100%; background: rgba(255,255,255,0.08) !important; color: inherit !important; border: 1px solid var(--ce-panel-border); border-radius: 8px; padding: 8px; outline: none; margin-bottom: 4px; appearance: none; cursor: pointer; transition: all 0.2s; }
-    #ce-panel select:hover { background: rgba(255,255,255,0.15) !important; border-color: var(--ce-panel-accent); }
-    #ce-panel option { background: #1a1a1a !important; color: #fff !important; padding: 8px; }
-    #ce-panel input[type="text"], #ce-panel input[type="number"] { width: 100%; box-sizing: border-box !important; background: rgba(255,255,255,0.05); color: inherit; border: 1px solid var(--ce-panel-border); border-radius: 6px; padding: 6px; outline: none; }
-    #ce-panel input[type="number"] { width: 60px; padding: 2px 4px; text-align: right; background: transparent; border: 0; font-weight: 600; font-family: monospace; }
-    #ce-panel input[type="number"]::-webkit-inner-spin-button { display: none; }
-    #ce-panel input[type="color"] { padding: 0; border: 0; width: 40px; height: 24px; background: transparent; cursor: pointer; }
-    #ce-panel input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--ce-panel-border); border-radius: 2px; outline: none; margin: 12px 0; }
-    #ce-panel input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--ce-panel-accent); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px var(--ce-panel-accent); }
-    .ce-section { border-bottom: 1px solid var(--ce-panel-border); margin-bottom: 4px; }
-    .ce-section-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; cursor: pointer; font-weight: 600; transition: color 0.2s; }
-    .ce-section-header:hover { color: var(--ce-panel-accent); }
-    .ce-section-content { display: none; padding: 0 4px 12px 4px; }
-    .ce-section.active .ce-section-content { display: block; }
-    .ce-section-header::after { content: "▼"; font-size: 10px; transition: transform 0.3s; }
-    .ce-section.active .ce-section-header::after { transform: rotate(180deg); }
-    .ce-info { display: inline-block; width: 16px; height: 16px; background: var(--ce-panel-border); color: inherit; font-size: 11px; line-height: 16px; text-align: center; border-radius: 50%; margin-left: 8px; cursor: help; position: relative; }
-
-    #ce-tooltip {
+    #walamo-search-container { backdrop-filter: inherit; -webkit-backdrop-filter: inherit; }
+    #walamo-caption-panel select { width: 100%; background: rgba(255,255,255,0.08) !important; color: inherit !important; border: 1px solid var(--walamo-panel-border); border-radius: 8px; padding: 8px; outline: none; margin-bottom: 4px; appearance: none; cursor: pointer; transition: all 0.2s; }
+    #walamo-caption-panel select:hover { background: rgba(255,255,255,0.15) !important; border-color: var(--walamo-panel-accent); }
+    #walamo-caption-panel option { background: #1a1a1a !important; color: #fff !important; padding: 8px; }
+    #walamo-caption-panel input[type="text"], #walamo-caption-panel input[type="number"] { width: 100%; box-sizing: border-box !important; background: rgba(255,255,255,0.05); color: inherit; border: 1px solid var(--walamo-panel-border); border-radius: 6px; padding: 6px; outline: none; }
+    #walamo-caption-panel input[type="number"] { width: 60px; padding: 2px 4px; text-align: right; background: transparent; border: 0; font-weight: 600; font-family: monospace; }
+    #walamo-caption-panel input[type="number"]::-webkit-inner-spin-button { display: none; }
+    #walamo-caption-panel input[type="color"] { padding: 0; border: 0; width: 40px; height: 24px; background: transparent; cursor: pointer; }
+    #walamo-caption-panel input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--walamo-panel-border); border-radius: 2px; outline: none; margin: 12px 0; }
+    #walamo-caption-panel input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--walamo-panel-accent); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px var(--walamo-panel-accent); }
+    .walamo-section { border-bottom: 1px solid var(--walamo-panel-border); margin-bottom: 4px; }
+    .walamo-section-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; cursor: pointer; font-weight: 600; transition: color 0.2s; }
+    .walamo-section-header:hover { color: var(--walamo-panel-accent); }
+    .walamo-section-content { display: none; padding: 0 4px 12px 4px; }
+    .walamo-section.active .walamo-section-content { display: block; }
+    .walamo-section-header::after { content: "▼"; font-size: 10px; transition: transform 0.3s; }
+    .walamo-section.active .walamo-section-header::after { transform: rotate(180deg); }
+    .walamo-info { display: inline-block; width: 16px; height: 16px; background: var(--walamo-panel-border); color: inherit; font-size: 11px; line-height: 16px; text-align: center; border-radius: 50%; margin-left: 8px; cursor: help; position: relative; }
+    
+    #walamo-tooltip {
       position: fixed;
       z-index: 2147483647;
-      background: var(--ce-panel-bg);
-      color: var(--ce-panel-text);
-      --ce-panel-bg-alpha: 0.95 !important;
+      background: var(--walamo-panel-bg);
+      color: var(--walamo-panel-text);
+      --walamo-panel-bg-alpha: 0.95 !important;
       padding: 10px 14px;
       border-radius: 10px;
       font-size: 12px;
       line-height: 1.4;
       width: 220px;
       white-space: normal;
-      border: 1px solid var(--ce-panel-accent);
+      border: 1px solid var(--walamo-panel-accent);
       box-shadow: 0 10px 40px rgba(0,0,0,0.8);
       pointer-events: none;
       opacity: 0;
@@ -1040,24 +1048,24 @@
       transition: opacity 0.2s, transform 0.2s;
       transform: translateX(10px);
     }
-    #ce-tooltip.active {
+    #walamo-tooltip.active {
       opacity: 1;
       visibility: visible;
       transform: translateX(0);
     }
 
-    .ce-switch {
+    .walamo-switch {
       position: relative;
       display: inline-block;
       width: 36px;
       height: 20px;
       background-color: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--ce-panel-border);
+      border: 1px solid var(--walamo-panel-border);
       border-radius: 20px;
       transition: background-color 0.25s, border-color 0.25s;
       cursor: pointer;
     }
-    .ce-switch::after {
+    .walamo-switch::after {
       content: "";
       position: absolute;
       width: 14px;
@@ -1069,19 +1077,19 @@
       transition: transform 0.25s;
       box-shadow: 0 1px 3px rgba(0,0,0,0.4);
     }
-    .ce-switch.active {
-      background-color: var(--ce-panel-accent);
-      border-color: var(--ce-panel-accent);
+    .walamo-switch.active {
+      background-color: var(--walamo-panel-accent);
+      border-color: var(--walamo-panel-accent);
     }
-    .ce-switch.active::after {
+    .walamo-switch.active::after {
       transform: translateX(16px);
     }
-    #ce-search-container { margin-bottom: 12px; }
-    #ce-search {
+    #walamo-search-container { margin-bottom: 12px; }
+    #walamo-search {
       width: 100%;
       box-sizing: border-box !important;
       background: rgba(0, 0, 0, 0.2) !important;
-      border: 1px solid var(--ce-panel-border) !important;
+      border: 1px solid var(--walamo-panel-border) !important;
       border-radius: 8px !important;
       padding: 8px 12px !important;
       color: inherit !important;
@@ -1089,107 +1097,107 @@
       outline: none !important;
       transition: all 0.2s;
     }
-    .ce-theme-light #ce-search {
+    .walamo-theme-light #walamo-search {
       background: rgba(0, 0, 0, 0.05) !important;
     }
-    .ce-theme-lightglass #ce-search {
+    .walamo-theme-lightglass #walamo-search {
       background: rgba(255, 255, 255, 0.45) !important;
       border-color: rgba(0, 0, 0, 0.15) !important;
     }
-    .ce-theme-glass #ce-search {
+    .walamo-theme-glass #walamo-search {
       background: rgba(255, 255, 255, 0.07) !important;
     }
-    #ce-search:focus {
-      border-color: var(--ce-panel-accent) !important;
+    #walamo-search:focus {
+      border-color: var(--walamo-panel-accent) !important;
       box-shadow: 0 0 8px rgba(62, 166, 255, 0.3) !important;
       background: rgba(0, 0, 0, 0.3) !important;
     }
-    .ce-theme-light #ce-search:focus {
+    .walamo-theme-light #walamo-search:focus {
       background: rgba(0, 0, 0, 0.08) !important;
     }
-    #ce-mode-toggle { display: flex; background: var(--ce-panel-border); border-radius: 8px; padding: 2px; margin-bottom: 12px; }
-    .ce-mode-btn { flex: 1; padding: 6px; text-align: center; cursor: pointer; border-radius: 6px; font-weight: 600; }
-    .ce-mode-btn.active { background: var(--ce-panel-bg); color: var(--ce-panel-accent); }
-    .ce-button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-    .ce-action-btn { padding: 8px; border-radius: 8px; background: var(--ce-panel-border); color: inherit; font-size: 12px; border: 0; cursor: pointer; }
-    #ce-caption-close { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--ce-panel-border); color: inherit; cursor: pointer; }
-    .ce-slider-top { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-    .ce-mini-reset { width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 4px; background: var(--ce-panel-border); cursor: pointer; font-size: 10px; margin-left: 6px; border: 0; color: inherit; }
-    .ce-status { margin-top: 10px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); font-size: 11px; font-family: monospace; border: 1px solid var(--ce-panel-border); }
+    #walamo-mode-toggle { display: flex; background: var(--walamo-panel-border); border-radius: 8px; padding: 2px; margin-bottom: 12px; }
+    .walamo-mode-btn { flex: 1; padding: 6px; text-align: center; cursor: pointer; border-radius: 6px; font-weight: 600; }
+    .walamo-mode-btn.active { background: var(--walamo-panel-bg); color: var(--walamo-panel-accent); }
+    .walamo-button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .walamo-action-btn { padding: 8px; border-radius: 8px; background: var(--walamo-panel-border); color: inherit; font-size: 12px; border: 0; cursor: pointer; }
+    #walamo-caption-close { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--walamo-panel-border); color: inherit; cursor: pointer; }
+    .walamo-slider-top { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .walamo-mini-reset { width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 4px; background: var(--walamo-panel-border); cursor: pointer; font-size: 10px; margin-left: 6px; border: 0; color: inherit; }
+    .walamo-status { margin-top: 10px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); font-size: 11px; font-family: monospace; border: 1px solid var(--walamo-panel-border); }
 
     /* Advanced Font Picker */
-    .ce-font-picker-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--ce-panel-border); border-radius: 8px; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
-    .ce-font-picker-trigger:hover { background: rgba(255,255,255,0.1); border-color: var(--ce-panel-accent); }
-    .ce-font-picker-trigger .font-name { font-weight: 600; flex: 1; text-align: left; }
-    .ce-font-picker-trigger .font-preview { font-size: 11px; opacity: 0.7; margin-right: 10px; }
+    .walamo-font-picker-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--walamo-panel-border); border-radius: 8px; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+    .walamo-font-picker-trigger:hover { background: rgba(255,255,255,0.1); border-color: var(--walamo-panel-accent); }
+    .walamo-font-picker-trigger .font-name { font-weight: 600; flex: 1; text-align: left; }
+    .walamo-font-picker-trigger .font-preview { font-size: 11px; opacity: 0.7; margin-right: 10px; }
 
-    #ce-font-picker-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2147483647; backdrop-filter: blur(4px); }
-    #ce-font-picker-modal.active { display: flex; }
-    .ce-font-picker-content { width: 450px; max-height: 80vh; background: var(--ce-panel-bg); border: 1px solid var(--ce-panel-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-    .ce-font-picker-header { padding: 20px; border-bottom: 1px solid var(--ce-panel-border); }
-    .ce-font-picker-search { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--ce-panel-border); border-radius: 10px; padding: 12px; color: #fff; outline: none; font-size: 14px; }
-    .ce-font-picker-search:focus { border-color: var(--ce-panel-accent); }
-
-    .ce-font-picker-body { flex: 1; overflow-y: auto; padding: 10px; }
-    .ce-font-category { margin-bottom: 15px; }
-    .ce-font-category-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--ce-panel-accent); margin: 10px 10px 5px 10px; letter-spacing: 1px; }
-
-    .ce-font-item { display: flex; align-items: center; padding: 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; position: relative; }
-    .ce-font-item:hover { background: rgba(255,255,255,0.08); }
-    .ce-font-item.active { background: rgba(62, 166, 255, 0.15); border: 1px solid var(--ce-panel-accent); }
-    .ce-font-item .font-info { flex: 1; }
-    .ce-font-item .font-family-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-    .ce-font-item .font-sample { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ce-font-item .favorite-toggle { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; opacity: 0.3; transition: opacity 0.2s; font-size: 16px; margin-left: 10px; }
-    .ce-font-item:hover .favorite-toggle { opacity: 0.7; }
-    .ce-font-item .favorite-toggle.active { opacity: 1; color: #ffca28; }
-
-    .ce-font-picker-footer { padding: 15px; border-top: 1px solid var(--ce-panel-border); display: flex; justify-content: space-between; align-items: center; }
-    .ce-font-add-btn { background: var(--ce-panel-accent); color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
-
-    .ce-font-custom-input { padding: 20px; display: none; flex-direction: column; gap: 12px; }
-    .ce-font-custom-input.active { display: flex; }
-    .ce-font-custom-input input { background: rgba(255,255,255,0.05); border: 1px solid var(--ce-panel-border); border-radius: 8px; padding: 10px; color: #fff; outline: none; }
+    #walamo-font-picker-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2147483647; backdrop-filter: blur(4px); }
+    #walamo-font-picker-modal.active { display: flex; }
+    .walamo-font-picker-content { width: 450px; max-height: 80vh; background: var(--walamo-panel-bg); border: 1px solid var(--walamo-panel-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+    .walamo-font-picker-header { padding: 20px; border-bottom: 1px solid var(--walamo-panel-border); }
+    .walamo-font-picker-search { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--walamo-panel-border); border-radius: 10px; padding: 12px; color: #fff; outline: none; font-size: 14px; }
+    .walamo-font-picker-search:focus { border-color: var(--walamo-panel-accent); }
+    
+    .walamo-font-picker-body { flex: 1; overflow-y: auto; padding: 10px; }
+    .walamo-font-category { margin-bottom: 15px; }
+    .walamo-font-category-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--walamo-panel-accent); margin: 10px 10px 5px 10px; letter-spacing: 1px; }
+    
+    .walamo-font-item { display: flex; align-items: center; padding: 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; position: relative; }
+    .walamo-font-item:hover { background: rgba(255,255,255,0.08); }
+    .walamo-font-item.active { background: rgba(62, 166, 255, 0.15); border: 1px solid var(--walamo-panel-accent); }
+    .walamo-font-item .font-info { flex: 1; }
+    .walamo-font-item .font-family-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .walamo-font-item .font-sample { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .walamo-font-item .favorite-toggle { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; opacity: 0.3; transition: opacity 0.2s; font-size: 16px; margin-left: 10px; }
+    .walamo-font-item:hover .favorite-toggle { opacity: 0.7; }
+    .walamo-font-item .favorite-toggle.active { opacity: 1; color: #ffca28; }
+    
+    .walamo-font-picker-footer { padding: 15px; border-top: 1px solid var(--walamo-panel-border); display: flex; justify-content: space-between; align-items: center; }
+    .walamo-font-add-btn { background: var(--walamo-panel-accent); color: #fff; border: 0; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    
+    .walamo-font-custom-input { padding: 20px; display: none; flex-direction: column; gap: 12px; }
+    .walamo-font-custom-input.active { display: flex; }
+    .walamo-font-custom-input input { background: rgba(255,255,255,0.05); border: 1px solid var(--walamo-panel-border); border-radius: 8px; padding: 10px; color: #fff; outline: none; }
   `);
 
   function openPanel() {
     try {
-      const existing = document.querySelector('#ce-panel');
+      const existing = document.querySelector('#walamo-caption-panel');
       if (existing) { existing.remove(); return; }
       const panel = document.createElement('div');
-      panel.id = 'ce-panel';
-      panel.className = `ce-theme-${(settings.panelTheme || 'Dark').toLowerCase()}`;
-
+      panel.id = 'walamo-caption-panel';
+      panel.className = `walamo-theme-${(settings.panelTheme || 'Dark').toLowerCase()}`;
+      
       const headerContainer = document.createElement('div');
-      headerContainer.id = 'ce-panel-header';
-
-      const closeBtn = document.createElement('button'); closeBtn.id = 'ce-caption-close'; closeBtn.textContent = '×'; closeBtn.onclick = () => panel.remove(); headerContainer.appendChild(closeBtn);
+      headerContainer.id = 'walamo-panel-header';
+      
+      const closeBtn = document.createElement('button'); closeBtn.id = 'walamo-caption-close'; closeBtn.textContent = '×'; closeBtn.onclick = () => panel.remove(); headerContainer.appendChild(closeBtn);
       const title = document.createElement('h3'); title.textContent = 'Caption Styler Pro'; headerContainer.appendChild(title);
-      const previewContainer = document.createElement('div'); previewContainer.id = 'ce-preview-container';
+      const previewContainer = document.createElement('div'); previewContainer.id = 'walamo-preview-container';
       const previewText = document.createElement('span'); previewText.className = 'ytp-caption-segment'; previewText.textContent = 'Live Preview Example'; previewContainer.appendChild(previewText); headerContainer.appendChild(previewContainer);
-      const searchContainer = document.createElement('div'); searchContainer.id = 'ce-search-container';
-      const searchInput = document.createElement('input'); searchInput.id = 'ce-search'; searchInput.type = 'text'; searchInput.placeholder = 'Search settings...'; searchContainer.appendChild(searchInput); headerContainer.appendChild(searchContainer);
-      const modeToggle = document.createElement('div'); modeToggle.id = 'ce-mode-toggle';
+      const searchContainer = document.createElement('div'); searchContainer.id = 'walamo-search-container';
+      const searchInput = document.createElement('input'); searchInput.id = 'walamo-search'; searchInput.type = 'text'; searchInput.placeholder = 'Search settings...'; searchContainer.appendChild(searchInput); headerContainer.appendChild(searchContainer);
+      const modeToggle = document.createElement('div'); modeToggle.id = 'walamo-mode-toggle';
       const isBasic = settings.basicMode === 1;
-      const basicBtn = document.createElement('div'); basicBtn.className = `ce-mode-btn ${isBasic ? 'active' : ''}`; basicBtn.textContent = 'Basic';
-      const advBtn = document.createElement('div'); advBtn.className = `ce-mode-btn ${!isBasic ? 'active' : ''}`; advBtn.textContent = 'Advanced';
+      const basicBtn = document.createElement('div'); basicBtn.className = `walamo-mode-btn ${isBasic ? 'active' : ''}`; basicBtn.textContent = 'Basic';
+      const advBtn = document.createElement('div'); advBtn.className = `walamo-mode-btn ${!isBasic ? 'active' : ''}`; advBtn.textContent = 'Advanced';
       modeToggle.appendChild(basicBtn); modeToggle.appendChild(advBtn); headerContainer.appendChild(modeToggle);
       panel.appendChild(headerContainer);
 
       const scrollContainer = document.createElement('div');
-      scrollContainer.className = 'ce-panel-scroll';
+      scrollContainer.className = 'walamo-panel-scroll';
       panel.appendChild(scrollContainer);
 
       const uiMap = {};
-      let tooltipEl = document.querySelector('#ce-tooltip');
+      let tooltipEl = document.querySelector('#walamo-tooltip');
       if (!tooltipEl) {
         tooltipEl = document.createElement('div');
-        tooltipEl.id = 'ce-tooltip';
+        tooltipEl.id = 'walamo-tooltip';
         document.body.appendChild(tooltipEl);
       }
       const showTooltip = (el) => {
         tooltipEl.textContent = el.dataset.tooltip;
-        tooltipEl.className = `ce-theme-${(settings.panelTheme || 'Dark').toLowerCase()} active`;
+        tooltipEl.className = `walamo-theme-${(settings.panelTheme || 'Dark').toLowerCase()} active`;
         const rect = el.getBoundingClientRect();
         const tRect = tooltipEl.getBoundingClientRect();
         let left = rect.left - tRect.width - 12;
@@ -1203,26 +1211,26 @@
       scrollContainer.addEventListener('scroll', hideTooltip);
 
       function createSection(name, basic = false) {
-        const section = document.createElement('div'); section.className = 'ce-section';
+        const section = document.createElement('div'); section.className = 'walamo-section';
         if (!basic && settings.basicMode === 1) section.style.display = 'none';
-        const header = document.createElement('div'); header.className = 'ce-section-header'; header.textContent = name;
-        const content = document.createElement('div'); content.className = 'ce-section-content';
-        header.onclick = () => { const active = section.classList.contains('active'); document.querySelectorAll('.ce-section').forEach(s => s.classList.remove('active')); if (!active) section.classList.add('active'); };
+        const header = document.createElement('div'); header.className = 'walamo-section-header'; header.textContent = name;
+        const content = document.createElement('div'); content.className = 'walamo-section-content';
+        header.onclick = () => { const active = section.classList.contains('active'); document.querySelectorAll('.walamo-section').forEach(s => s.classList.remove('active')); if (!active) section.classList.add('active'); };
         section.appendChild(header); section.appendChild(content); scrollContainer.appendChild(section); return content;
       }
       function appendOption(select, value, text) { const opt = document.createElement('option'); opt.value = value; opt.textContent = text; select.appendChild(opt); }
       function addSlider(name, key, min, max, target, tooltip = "") {
-        const row = document.createElement('div'); row.className = 'ce-slider-row'; row.dataset.search = name.toLowerCase();
-        const top = document.createElement('div'); top.className = 'ce-slider-top';
+        const row = document.createElement('div'); row.className = 'walamo-slider-row'; row.dataset.search = name.toLowerCase();
+        const top = document.createElement('div'); top.className = 'walamo-slider-top';
         const labelArea = document.createElement('div'); labelArea.style.display = 'flex'; labelArea.style.alignItems = 'center';
         const lbl = document.createElement('span'); lbl.textContent = name; labelArea.appendChild(lbl);
         if (tooltip) {
-          const i = document.createElement('span'); i.className = 'ce-info'; i.dataset.tooltip = tooltip; i.textContent = 'i';
+          const i = document.createElement('span'); i.className = 'walamo-info'; i.dataset.tooltip = tooltip; i.textContent = 'i';
           i.onmouseenter = () => showTooltip(i);
           i.onmouseleave = hideTooltip;
           labelArea.appendChild(i);
         }
-        const resetBtn = document.createElement('button'); resetBtn.className = 'ce-mini-reset'; resetBtn.textContent = '↺'; resetBtn.onclick = () => { const def = defaults[key]; input.value = def; numInput.value = def; applySetting(key, def); };
+        const resetBtn = document.createElement('button'); resetBtn.className = 'walamo-mini-reset'; resetBtn.textContent = '↺'; resetBtn.onclick = () => { const def = defaults[key]; input.value = def; numInput.value = def; applySetting(key, def); };
         labelArea.appendChild(resetBtn);
         const numInput = document.createElement('input'); numInput.type = 'number'; numInput.value = settings[key] ?? defaults[key];
         const input = document.createElement('input'); input.type = 'range'; input.min = min; input.max = max; input.value = settings[key] ?? defaults[key];
@@ -1232,7 +1240,7 @@
         uiMap[key] = { input, val: numInput };
       }
       function addPicker(name, keyP, target, grad = false) {
-        const row = document.createElement('div'); row.className = 'ce-slider-row'; row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.marginTop = '10px'; row.dataset.search = name.toLowerCase();
+        const row = document.createElement('div'); row.className = 'walamo-slider-row'; row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.marginTop = '10px'; row.dataset.search = name.toLowerCase();
         const lbl = document.createElement('span'); lbl.textContent = name;
         const pks = document.createElement('div'); pks.style.display = 'flex'; pks.style.gap = '8px';
         const cp1 = document.createElement('input'); cp1.type = 'color'; cp1.value = rgbToHex(settings[keyP+'Red'], settings[keyP+'Green'], settings[keyP+'Blue']);
@@ -1244,11 +1252,11 @@
         uiMap[keyP] = { cp1, cp2 };
       }
       function addDropdown(name, key, options, target, tooltip = "") {
-        const row = document.createElement('div'); row.className = 'ce-slider-row'; row.style.marginTop = '10px'; row.dataset.search = name.toLowerCase();
-        const top = document.createElement('div'); top.className = 'ce-slider-top';
+        const row = document.createElement('div'); row.className = 'walamo-slider-row'; row.style.marginTop = '10px'; row.dataset.search = name.toLowerCase();
+        const top = document.createElement('div'); top.className = 'walamo-slider-top';
         const lbl = document.createElement('span'); lbl.textContent = name;
         if (tooltip) {
-          const i = document.createElement('span'); i.className = 'ce-info'; i.dataset.tooltip = tooltip; i.textContent = 'i';
+          const i = document.createElement('span'); i.className = 'walamo-info'; i.dataset.tooltip = tooltip; i.textContent = 'i';
           i.onmouseenter = () => showTooltip(i);
           i.onmouseleave = hideTooltip;
           lbl.appendChild(i);
@@ -1260,16 +1268,16 @@
         uiMap[key] = { select: sel };
       }
       function addToggle(name, key, target, tooltip = "") {
-        const row = document.createElement('div'); row.className = 'ce-slider-row'; row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center'; row.style.marginTop = '10px'; row.dataset.search = name.toLowerCase();
+        const row = document.createElement('div'); row.className = 'walamo-slider-row'; row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center'; row.style.marginTop = '10px'; row.dataset.search = name.toLowerCase();
         const labelArea = document.createElement('div'); labelArea.style.display = 'flex'; labelArea.style.alignItems = 'center';
         const lbl = document.createElement('span'); lbl.textContent = name; labelArea.appendChild(lbl);
         if (tooltip) {
-          const i = document.createElement('span'); i.className = 'ce-info'; i.dataset.tooltip = tooltip; i.textContent = 'i';
+          const i = document.createElement('span'); i.className = 'walamo-info'; i.dataset.tooltip = tooltip; i.textContent = 'i';
           i.onmouseenter = () => showTooltip(i);
           i.onmouseleave = hideTooltip;
           labelArea.appendChild(i);
         }
-        const sw = document.createElement('div'); sw.className = `ce-switch ${settings[key] === 1 ? 'active' : ''}`;
+        const sw = document.createElement('div'); sw.className = `walamo-switch ${settings[key] === 1 ? 'active' : ''}`;
         sw.onclick = () => {
           const val = settings[key] === 1 ? 0 : 1;
           applySetting(key, val);
@@ -1302,11 +1310,11 @@
       upCust(); s1.appendChild(sel2);
       sel2.onchange = () => applyPreset(customPresets[sel2.value]);
       sel2.onkeydown = (e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') setTimeout(() => applyPreset(customPresets[sel2.value]), 10); };
-      const aG1 = document.createElement('div'); aG1.className = 'ce-button-group';
-      const bS = document.createElement('button'); bS.className = 'ce-action-btn'; bS.textContent = 'Save Current'; bS.onclick = () => { const n = prompt('Name:'); if (n) { saveCustomPreset(n); upCust(); } };
-      const bD = document.createElement('button'); bD.className = 'ce-action-btn'; bD.textContent = 'Delete Selected'; bD.onclick = () => { if (sel2.value) { deleteCustomPreset(sel2.value); upCust(); } };
+      const aG1 = document.createElement('div'); aG1.className = 'walamo-button-group';
+      const bS = document.createElement('button'); bS.className = 'walamo-action-btn'; bS.textContent = 'Save Current'; bS.onclick = () => { const n = prompt('Name:'); if (n) { saveCustomPreset(n); upCust(); } };
+      const bD = document.createElement('button'); bD.className = 'walamo-action-btn'; bD.textContent = 'Delete Selected'; bD.onclick = () => { if (sel2.value) { deleteCustomPreset(sel2.value); upCust(); } };
       aG1.appendChild(bS); aG1.appendChild(bD); s1.appendChild(aG1);
-      const bRandom = document.createElement('button'); bRandom.className = 'ce-action-btn'; bRandom.style.marginTop = '8px'; bRandom.style.width = '100%'; bRandom.textContent = 'Random Style';
+      const bRandom = document.createElement('button'); bRandom.className = 'walamo-action-btn'; bRandom.style.marginTop = '8px'; bRandom.style.width = '100%'; bRandom.textContent = 'Random Style';
       bRandom.onclick = () => {
         const name = applyRandomStyle();
         updateUI();
@@ -1343,14 +1351,14 @@
       addToggle('Remove Speaker Names', 'cleanupSpeakers', sCleanup, 'e.g. JOHN:');
       addToggle('Remove >> Arrows', 'cleanupSpeakerArrows', sCleanup, 'Remove >> symbols indicating speaker changes');
       addToggle('Remove Word Stutters', 'cleanupStutters', sCleanup, 'Remove duplicate adjacent common words like "the the", "in in", etc.');
-
+      
       // Smart Filler Removal (Mashed into Cleanup)
       addToggle('Filler Removal', 'fillerRemoval', sCleanup, 'Targets uh, um, uhh, uhm, you know, like, I');
       addToggle('Dim Fillers', 'fillerMode', sCleanup, 'On to dim fillers (using opacity below), Off to remove them completely');
       addSlider('Filler Opacity', 'fillerOpacity', 0, 100, sCleanup, 'Opacity when using Dim mode');
 
       addToggle('Custom Regex Filter', 'cleanupCustomEnabled', sCleanup);
-      const regexRow = document.createElement('div'); regexRow.className = 'ce-slider-row'; regexRow.style.marginTop = '10px'; regexRow.dataset.search = 'custom regex filter';
+      const regexRow = document.createElement('div'); regexRow.className = 'walamo-slider-row'; regexRow.style.marginTop = '10px'; regexRow.dataset.search = 'custom regex filter';
       const regexInp = document.createElement('input'); regexInp.type = 'text'; regexInp.placeholder = 'Custom regex pattern...'; regexInp.value = settings.cleanupCustomRegex || '';
       regexInp.onchange = () => applySetting('cleanupCustomRegex', regexInp.value);
       regexInp.oninput = () => applySetting('cleanupCustomRegex', regexInp.value);
@@ -1372,12 +1380,12 @@
       addDropdown('White Space', 'whiteSpace', { 'normal': 'Normal', 'pre-wrap': 'Pre-wrap', 'break-spaces': 'Break-spaces' }, sLay);
 
       const sTypo = createSection('Typography', true);
-
+      
       const fontTrigger = document.createElement('div');
-      fontTrigger.className = 'ce-font-picker-trigger';
+      fontTrigger.className = 'walamo-font-picker-trigger';
       setHTML(fontTrigger, `<span class="font-preview" style="font-family: '${settings.fontFamily}', sans-serif;">Abc</span><span class="font-name">${settings.fontFamily}</span><span>▼</span>`);
       sTypo.appendChild(fontTrigger);
-
+      
       initFontPicker(fontTrigger, (font) => {
           applySetting('fontFamily', font);
           fontTrigger.querySelector('.font-name').textContent = font;
@@ -1387,9 +1395,9 @@
       addDropdown('Font Weight', 'fontWeight', { 100: '100 - Thin', 200: '200 - Extra Light', 300: '300 - Light', 400: '400 - Regular', 500: '500 - Medium', 600: '600 - Semi Bold', 700: '700 - Bold', 800: '800 - Extra Bold', 900: '900 - Black' }, sTypo);
       addSlider('Font Scale (%)', 'fontScale', 20, 500, sTypo);
       addDropdown('Font Style', 'fontStyle', { 'normal': 'Normal', 'italic': 'Italic' }, sTypo);
-      const decRow = document.createElement('div'); decRow.className = 'ce-slider-row'; decRow.style.marginTop = '10px'; decRow.textContent = 'Text Decoration';
+      const decRow = document.createElement('div'); decRow.className = 'walamo-slider-row'; decRow.style.marginTop = '10px'; decRow.textContent = 'Text Decoration';
       const decGrp = document.createElement('div'); decGrp.style.display = 'flex'; decGrp.style.gap = '4px'; decGrp.style.marginTop = '4px';
-      ['none', 'underline', 'overline', 'line-through'].forEach(d => { const b = document.createElement('button'); b.className = 'ce-action-btn'; b.textContent = d.replace('line-through', 'strike'); b.onclick = () => applySetting('textDecoration', d); decGrp.appendChild(b); });
+      ['none', 'underline', 'overline', 'line-through'].forEach(d => { const b = document.createElement('button'); b.className = 'walamo-action-btn'; b.textContent = d.replace('line-through', 'strike'); b.onclick = () => applySetting('textDecoration', d); decGrp.appendChild(b); });
       sTypo.appendChild(decRow); sTypo.appendChild(decGrp);
       addSlider('Letter Spacing', 'letterSpacing', -20, 50, sTypo);
       addSlider('Line Height', 'lineHeight', 80, 200, sTypo);
@@ -1408,7 +1416,7 @@
       addSlider('Bright Outline Boost', 'smartOutlineBoost', 0, 100, sSmart);
       addSlider('Dark BG Reduction', 'smartDarkBgReduction', 0, 100, sSmart);
       addSlider('Dark Glow Boost', 'smartDarkGlowBoost', 0, 100, sSmart);
-      const status = document.createElement('div'); status.className = 'ce-status'; status.id = 'ce-smart-status'; status.textContent = 'Smart Contrast: Initializing...'; sSmart.appendChild(status);
+      const status = document.createElement('div'); status.className = 'walamo-status'; status.id = 'walamo-smart-status'; status.textContent = 'Smart Contrast: Initializing...'; sSmart.appendChild(status);
 
       const sEffects = createSection('Effects & Automation', true);
       addToggle('Idle Fading', 'enableIdleFade', sEffects, 'Fades captions when video is paused or idle');
@@ -1441,12 +1449,12 @@
 
       const s7 = createSection('Advanced');
       const tSel = document.createElement('select'); ['Dark', 'Light', 'Glass', 'OLED', 'LightGlass', 'Nebula', 'Midnight', 'Emerald', 'Crimson'].forEach(t => appendOption(tSel, t, "Panel Theme: " + t)); tSel.value = settings.panelTheme || "Dark"; s7.appendChild(tSel);
-      tSel.onchange = () => { applySetting('panelTheme', tSel.value); panel.className = `ce-theme-${tSel.value.toLowerCase()}`; };
+      tSel.onchange = () => { applySetting('panelTheme', tSel.value); panel.className = `walamo-theme-${tSel.value.toLowerCase()}`; };
 
       const bgContainer = document.createElement('div'); bgContainer.style.display = 'flex'; bgContainer.style.gap = '8px'; bgContainer.style.marginTop = '10px';
       const bgInp = document.createElement('input'); bgInp.type = 'text'; bgInp.placeholder = 'Background Image URL...'; bgInp.value = settings.panelBgImg || '';
       bgInp.style.flex = '1';
-      const bgBtn = document.createElement('button'); bgBtn.className = 'ce-action-btn'; bgBtn.textContent = 'Apply'; bgBtn.style.width = '60px';
+      const bgBtn = document.createElement('button'); bgBtn.className = 'walamo-action-btn'; bgBtn.textContent = 'Apply'; bgBtn.style.width = '60px';
       bgBtn.onclick = () => applySetting('panelBgImg', bgInp.value);
       bgContainer.appendChild(bgInp); bgContainer.appendChild(bgBtn); s7.appendChild(bgContainer);
 
@@ -1458,30 +1466,30 @@
       addSlider('Panel Opacity', 'panelOpacity', 0, 100, s7, 'Opacity of the entire panel including all controls');
       addSlider('Gradient Angle', 'panelGradAngle', 0, 360, s7);
 
-      const aG2 = document.createElement('div'); aG2.className = 'ce-button-group';
-      const bE = document.createElement('button'); bE.className = 'ce-action-btn'; bE.textContent = 'Export JSON';
+      const aG2 = document.createElement('div'); aG2.className = 'walamo-button-group';
+      const bE = document.createElement('button'); bE.className = 'walamo-action-btn'; bE.textContent = 'Export JSON';
       bE.onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })); a.download = 'captions.json'; a.click(); };
-      const bI = document.createElement('button'); bI.className = 'ce-action-btn'; bI.textContent = 'Import JSON';
+      const bI = document.createElement('button'); bI.className = 'walamo-action-btn'; bI.textContent = 'Import JSON';
       bI.onclick = () => { const i = document.createElement('input'); i.type = 'file'; i.onchange = e => { const r = new FileReader(); r.onload = x => { const d = JSON.parse(x.target.result); for (const k in d) if (k in defaults) applySetting(k, d[k]); updateUI(); }; r.readAsText(e.target.files[0]); }; i.click(); };
       aG2.appendChild(bE); aG2.appendChild(bI); s7.appendChild(aG2);
-      const bR = document.createElement('button'); bR.className = 'ce-action-btn'; bR.style.color = '#f44'; bR.textContent = 'Nuke All Settings';
+      const bR = document.createElement('button'); bR.className = 'walamo-action-btn'; bR.style.color = '#f44'; bR.textContent = 'Nuke All Settings';
       bR.onclick = () => { if (confirm('Reset everything?')) { for (const k in defaults) applySetting(k, defaults[k]); updateUI(); } }; s7.appendChild(bR);
 
       searchInput.oninput = () => {
         const q = searchInput.value.trim().toLowerCase();
-        const rows = document.querySelectorAll('.ce-slider-row');
-        const sections = document.querySelectorAll('.ce-section');
+        const rows = document.querySelectorAll('.walamo-slider-row');
+        const sections = document.querySelectorAll('.walamo-section');
         if (!q) {
           rows.forEach(r => r.style.display = '');
           sections.forEach(s => {
             s.style.display = '';
-            s.querySelector('.ce-section-header').style.display = '';
+            s.querySelector('.walamo-section-header').style.display = '';
           });
           return;
         }
         sections.forEach(s => {
           let hasMatch = false;
-          s.querySelectorAll('.ce-slider-row').forEach(r => {
+          s.querySelectorAll('.walamo-slider-row').forEach(r => {
             const match = r.dataset.search.includes(q);
             r.style.display = match ? 'block' : 'none';
             if (match) hasMatch = true;
@@ -1489,7 +1497,7 @@
           if (hasMatch) {
             s.style.display = 'block';
             s.classList.add('active');
-            s.querySelector('.ce-section-header').style.display = 'none';
+            s.querySelector('.walamo-section-header').style.display = 'none';
           } else {
             s.style.display = 'none';
           }
@@ -1519,18 +1527,18 @@
         const sh = Math.round(vHeight * 0.3);
         const sy = vHeight - sh;
         ctx.drawImage(video, 0, sy, vWidth, sh, 0, 0, canvas.width, canvas.height);
-
+        
         const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         let r=0, g=0, b=0;
         for (let i=0; i<data.length; i+=4) { r+=data[i]; g+=data[i+1]; b+=data[i+2]; }
         const count = data.length / 4;
         const avgR = r/count, avgG = g/count, avgB = b/count;
         const targetLuma = 0.2126 * avgR + 0.7152 * avgG + 0.0722 * avgB;
-
+        
         // Smooth transition
         currentLuma = currentLuma * 0.75 + targetLuma * 0.25;
-
-        const stat = document.querySelector('#ce-smart-status');
+        
+        const stat = document.querySelector('#walamo-smart-status');
         if (stat) {
             const label = currentLuma > 160 ? 'BRIGHT' : (currentLuma < 70 ? 'DARK' : 'MEDIUM');
             stat.textContent = `Smart Contrast: ${label} (Luma: ${Math.round(currentLuma)})`;
@@ -1539,7 +1547,7 @@
         applySetting('update_boosts', null, true); // Trigger reactive update
     } catch (e) {
         settings.smartContrast = 0;
-        const stat = document.querySelector('#ce-smart-status');
+        const stat = document.querySelector('#walamo-smart-status');
         if (stat) stat.textContent = 'Smart Contrast: Disabled (CORS Restriction)';
     }
   }
@@ -1558,10 +1566,10 @@
 
   ready(() => {
     GM_registerMenuCommand('Open Caption Styler', openPanel);
-
+    
     // Load active font if it's a Google Font
     if (GOOGLE_FONTS_BASE.includes(settings.fontFamily)) loadGoogleFont(settings.fontFamily);
-
+    
     // Load custom fonts
     settings.customFonts.forEach(cf => {
         if (cf.url) loadCustomFont(cf.name, cf.url);
@@ -1593,10 +1601,10 @@
             const isPaused = player.classList.contains('paused-mode');
             const isAutohide = player.classList.contains('ytp-autohide');
             // Only fade if video is paused AND user is idle (controls hidden)
-            if (isPaused && isAutohide) player.classList.add('ce-idle-active');
-            else player.classList.remove('ce-idle-active');
+            if (isPaused && isAutohide) player.classList.add('walamo-idle-active');
+            else player.classList.remove('walamo-idle-active');
         } else {
-            player.classList.remove('ce-idle-active');
+            player.classList.remove('walamo-idle-active');
         }
     }, 500);
   });
